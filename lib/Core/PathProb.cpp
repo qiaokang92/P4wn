@@ -201,27 +201,26 @@ string QueryHandler::getOpsFromLine(int line, ref<Expr> cond)
    ref<Expr> r = cond;
 
    // parse condition to get ops
-   /*
    if (progName == "poise" ||
        progName == "blink" ||
        progName == "starflow" ||
        progName == "netcache"
       ) {
-   */
-   while (r->getWidth() != 8) {
-      r = cast<CmpExpr>(r)->right;
-      r->dump();
+      while (r->getWidth() != 8) {
+         r = cast<CmpExpr>(r)->right;
+         r->dump();
+      }
+
+      LOG(-1, "expr kind = %d", r->getKind());
+      cast<ReadExpr>(r)->index->dump();
+      string name = cast<ReadExpr>(r)->updates.root->name;
+      LOG(-1, "name = %s", name.c_str());
+
+      return name;
    }
 
-   LOG(-1, "expr kind = %d", r->getKind());
-   cast<ReadExpr>(r)->index->dump();
-   string name = cast<ReadExpr>(r)->updates.root->name;
-   LOG(-1, "name = %s", name.c_str());
-
-   return name;
-
    // legacy code: fixed mapping from line number to ops
-   /*
+   // Need to support generation for other programs
    if (progName == "poise") {
       if (line == 55) {
          return "ctx";
@@ -305,7 +304,6 @@ err:
    ERR("cannot find ops from line=%d for prog=%s", line, progName.c_str());
    assert(0);
    return "";
-   */
 }
 
 // TODO: add more programs
