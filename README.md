@@ -1,6 +1,18 @@
 # P4wn: A Probabilistic Profiler for Stateful P4 programs
 
-Publication: [ASPLOS'2021](https://asplos-conference.org/abstracts/asplos21-paper1594-extended_abstract.pdf)
+
+## Introdution
+
+P4wn is a program profiling tool for understanding the program behaviors of
+[P4](https://p4.org/) programs.
+Different from existing tools such as Vera, P4wn is not designed to verify
+correctness properties, such as finding out-of-bound memory accesses.
+Instead, P4wn focuses on profiling probabilities. Concretely, it tells us
+the probability for each [basic code blocks](https://en.wikipedia.org/wiki/Basic_block).
+
+Please find more information about P4wn in our [ASPLOS'2021](https://asplos-conference.org/abstracts/asplos21-paper1594-extended_abstract.pdf)
+paper.
+
 
 ## Setup
 
@@ -14,17 +26,33 @@ Note that we only need to do the first 3 steps.
 
 LattE provides model counting support for P4wn.
 Install LattE from [here](https://github.com/latte-int/latte-distro).
+P4wn relies on the executable `count` in the LattE package to provide model
+counting support.
+
+Add the `count` program in your `PATH` environment. To do this, we can add the following
+line to the `bashrc` file.
+
+```
+export PATH=$PATH:<path_to_folder_of_count>
+```
+
 
 ### Build P4wn
 
+After installing the dependencies, we can download and build P4wn from source.
+
+
 ```
+git clone git@github.com:qiaokang92/P4wn.git
+cd P4wn
 mkdir build
 cd build
 cmake -DENABLE_SOLVER_STP=ON -DLLVM_CONFIG_BINARY=/usr/bin/llvm-config-6.0 -DENABLE_UNIT_TESTS=OFF -DENABLE_SYSTEM_TESTS=OFF ..
 make -j<N>
 ```
 
-Add the following line in the `.bashrc` file:
+This will essentially builds a `klee` executable, which is the modified KLEE.
+Let's add the following line in the `.bashrc` file:
 ```
 alias p4wn="<p4wn_folder>/build/bin/klee"
 ```
