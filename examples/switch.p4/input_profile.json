@@ -1,0 +1,39 @@
+{
+    "headers": [
+        {
+            "header_name": "hdr.tcp.srcPort",
+            "ranges": [
+                {
+                    "range_low": 0,
+                    "range_high": 1,
+                    "prob": 0.3
+                },
+                {
+                    "range_low": 2,
+                    "range_high": 2,
+                    "prob": 0.5
+                },
+                {
+                    "range_low": 3,
+                    "range_high": 4,
+                    "prob": 0.2
+                }
+            ]
+        },
+        {
+            "header_name": "hdr.ipv4.ttl",
+            "ranges": [
+                {
+                    "range_low": 0,
+                    "range_high": 5,
+                    "prob": 0.1
+                },
+                {
+                    "range_low": 5,
+                    "range_high": 255,
+                    "prob": 0.9
+                }
+            ]
+        }
+    ]
+}
