@@ -55,11 +55,29 @@ int main()
    for (i = 0; i < NUM_LOOP; i ++) {
       hash_key_t *key_expr = get_key_expr("key");
       idx_t* idx = get_idx("idx");
-
-      if (*idx == 0) {
-         printf("forwarding to port 0\n");
+      // ecmp_group.apply();
+      uint8_t ecmp_select;
+      uint8_t egress_port;
+      if (*idx%2 == 0){
+         ecmp_select = 1;
       } else {
+         ecmp_select = 2;
+      }
+
+      // ecmp_nhop.apply();
+      if (ecmp_select == 1){
          printf("forwarding to port 1\n");
+         egress_port = 1;
+      } else {
+         printf("forwarding to port 2\n");
+         egress_port = 2;
+      }
+
+      // send_frame.apply();
+      if (egress_port == 1){
+         printf("rewrite_mac to port 1\n");
+      } else {
+         printf("rewrite_mac to port 2\n");
       }
    }
 

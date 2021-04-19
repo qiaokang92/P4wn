@@ -3,7 +3,7 @@
 #include <klee/klee.h>
 
 #define HASH_SIZE 64
-#define NUM_LOOP  5
+#define NUM_LOOP  2
 #define THRES     32
 
 typedef unsigned int uint;
@@ -26,6 +26,8 @@ static void sw_init(sw_t *sw)
    sw->bin_timeout_ms = 80;
 }
 
+
+
 static void sw_move(sw_t *sw)
 {
    sw->sum -= sw->bin[sw->prev_idx];
@@ -43,6 +45,7 @@ static void sw_add(sw_t *sw)
 int main()
 {
    int i, ret;
+
 
    // the sliding window
    sw_t sw;
@@ -75,58 +78,71 @@ int main()
    for (i = 0; i < NUM_LOOP; i ++) {
       printf("=== Loop %d ===\n", i);
       klee_update_iter(i);
+
+
       if (nexthop == 0) {
          printf("pkt[%d]: sending to nexthop %d\n", i, nexthop);
       } else {
          printf("pkt[%d]: sending to nexthop %d\n", i, nexthop);
       }
 
+
+      // Add match==1 into the following if-branch
+
       // filter out SYN packets and ACK-only packets
-      if (not_syn_ack_only[i]) {         // 4.5 / 5 = 0.9
+      if (not_syn_ack_only[i]) {
 
          // Move SW to the next bin if time out happens
-         if (is_sw_timeout[i]) {                        // 0.0405 / 5 = 0.0081
+         if (is_sw_timeout[i]) {
             sw_move(&sw);
          }
 
          // Access the Flow Table
          ret = klee_table_access();
-         if (ret == GREYBOX_HIT) {                         // 0.0100786 / 5 = 0.002
+         if (ret == GREYBOX_HIT) {
             printf("pkt[%d] hits the flow table\n", i);
 
             // reset the flow table entry upon FIN packets
-            if (is_fin[i]) {                               // 0.000709535 / 5 = 0.00014
+            if (is_fin[i]) {
                printf("pkt[%d] is a FIN, resetting this entry\n", i);
                klee_table_write(0);
 
                // update the sw if the flow has sent a rtx during the last
                // time window
-               if (is_rtx_before_fin[i]) {             // 7.09535e-10 / 5 = 1.41907e-10
+               if (is_rtx_before_fin[i]) {
                   sw.bin[sw.cur_idx] -= 1;
                }
             }
             // Check if this packet is a retransmission and update sw
-            else {                                           // 0.00936908 / 5 = 0.0018
-               if (is_rtx[i]) {       // query rtx           // 6.27729e-06/5 = 1.25e-06
+            else {
+               if (is_rtx[i]) {       // query rtx
+                  // case 1: timeout
+                  // case 2: not timeout
+                  // It updates the count accordingly
                   printf("pkt[%d] is an rtx\n", i);
                   sw_add(&sw);
+
                }
-               else {                                          // 0.00936281 / 5 = 0.0019
+               else {
                   printf("pkt[%d] is not an rtx, skip\n", i);
                }
             }
          }
 
          // table miss, reset this entry
-         else {    // 4.03992 / 5=0.807984
+         else {
             printf("pkt[%d] is not monitored by Blink!\n", i);
             // check if the flow has timeouted
-            if (is_flow_timeout[i]) {             // 0.403992 / 5 = 0.081
+
+            if (is_flow_timeout[i]) {
+               // during the last time window
                klee_table_write(0);
+
             }
          }
 
-         if (sw.sum >= THRES) {                   // 2.93651e-22 / 5 = 5.87302e-23
+
+         if (sw.sum >= THRES) {
             printf("pkt[%d] triggers fast rerouting to nexthop %d\n", i, nexthop);
             nexthop = 1;
          }

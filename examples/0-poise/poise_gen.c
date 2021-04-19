@@ -6,7 +6,7 @@
 #include <klee/klee.h>
 
 #define HASH_SIZE 64
-#define NUM_LOOP  2
+#define NUM_LOOP  3
 
 typedef unsigned char uchar;
 typedef unsigned int uint;
@@ -54,10 +54,12 @@ int main()
    int isCtx[NUM_LOOP];
    int context[NUM_LOOP];
    int isNewFlow[NUM_LOOP];
+   uint64_t tstamp[NUM_LOOP];
 
    klee_make_symbolic(isCtx, sizeof isCtx, "isCtx");
    klee_make_symbolic(context, sizeof context, "ctx");
    klee_make_symbolic(isNewFlow, sizeof isNewFlow, "isNewFlow");
+   klee_make_symbolic(tstamp, sizeof tstamp, "tstamp");
 
    entry_t table[HASH_SIZE];
    memset((void *)table, 0, sizeof(entry_t) * HASH_SIZE);
@@ -99,6 +101,8 @@ int main()
          }
          port = POISE_PORT_CTX;
       }
+
+      uint32_t tstamp_high32 = tstamp[i] >> 32;
 
       // this packet hits on the conn_t table
       if (isNewFlow[i] == 0) {

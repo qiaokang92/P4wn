@@ -6,6 +6,7 @@
 #define NUM_LOOP  4
 #define THRES     (NUM_LOOP - 1)
 #define REAL_THRES  32
+
 typedef unsigned int uint;
 
 typedef struct sliding_window {
@@ -26,6 +27,8 @@ static void sw_init(sw_t *sw)
    sw->bin_timeout_ms = 80;
 }
 
+
+
 static void sw_move(sw_t *sw)
 {
    sw->sum -= sw->bin[sw->prev_idx];
@@ -44,90 +47,103 @@ int main()
 {
    int i, ret;
 
+
    // the sliding window
    sw_t sw;
    sw_init(&sw);
 
-   int is_rtx[NUM_LOOP];
-   int is_fin[NUM_LOOP];
-   int is_sw_timeout[NUM_LOOP];
-   int payload_len[NUM_LOOP];
-   int not_syn[NUM_LOOP];
-   int is_rtx_before_fin[NUM_LOOP];
-   int is_rtx_close[NUM_LOOP];
-   int is_flow_timeout[NUM_LOOP];
+   uint8_t is_rtx[NUM_LOOP];
+   uint8_t is_fin[NUM_LOOP];
+   uint8_t is_sw_timeout[NUM_LOOP];
+   uint8_t not_syn_ack_only[NUM_LOOP];
+   uint8_t not_syn[NUM_LOOP];
+   uint8_t is_rtx_before_fin[NUM_LOOP];
+   uint8_t is_rtx_close[NUM_LOOP];
+   uint8_t is_flow_timeout[NUM_LOOP];
 
-   klee_make_symbolic(is_rtx, sizeof is_rtx, "is_rtx");
-   klee_make_symbolic(is_fin, sizeof is_fin, "is_fin");
-   klee_make_symbolic(is_sw_timeout, sizeof is_sw_timeout, "is_sw_timeout");
-   klee_make_symbolic(payload_len, sizeof payload_len, "payload_len");
+   klee_make_symbolic(is_rtx, sizeof is_rtx, "rtx");
+   klee_make_symbolic(is_fin, sizeof is_fin, "fin");
+   klee_make_symbolic(is_sw_timeout, sizeof is_sw_timeout, "overall_to:80");
+   klee_make_symbolic(not_syn_ack_only, sizeof not_syn_ack_only, "not_syn_ack_only");
    klee_make_symbolic(not_syn, sizeof not_syn, "not_syn");
-   klee_make_symbolic(is_rtx_before_fin, sizeof is_rtx_before_fin, "is_rtx_before_fin");
+   klee_make_symbolic(is_rtx_before_fin, sizeof is_rtx_before_fin, "rtx_before_fin");
    klee_make_symbolic(is_rtx_close, sizeof is_rtx_close, "is_rtx_close");
    klee_make_symbolic(is_flow_timeout, sizeof is_flow_timeout, "is_flow_timeout");
 
    // Initialize the Blink flow table, modeled as a greybox
    klee_table_init(HASH_SIZE);
-   //printf("initializing a hash table, size=%d\n", HASH_SIZE);
+   printf("initializing a hash table, size=%d\n", HASH_SIZE);
 
    int nexthop = 0;
    klee_telescope_init(THRES, REAL_THRES);
    for (i = 0; i < NUM_LOOP; i ++) {
-      //printf("=== Loop %d ===\n", i);
+      printf("=== Loop %d ===\n", i);
+      // klee_update_iter(i);
+
 
       if (nexthop == 0) {
-         //printf("pkt[%d]: sending to nexthop %d\n", i, nexthop);
+         printf("pkt[%d]: sending to nexthop %d\n", i, nexthop);
       } else {
-         //printf("pkt[%d]: sending to nexthop %d\n", i, nexthop);
+         printf("pkt[%d]: sending to nexthop %d\n", i, nexthop);
       }
 
+
+      // Add match==1 into the following if-branch
       // filter out SYN packets and ACK-only packets
-      if (payload_len[i] > 0 && not_syn[i]) {         // 4.5 / 5 = 0.9
+      if (not_syn_ack_only[i]) {
 
          // Move SW to the next bin if time out happens
-         if (is_sw_timeout[i]) {                        // 0.0405 / 5 = 0.0081
+         if (is_sw_timeout[i]) {
             sw_move(&sw);
          }
 
          // Access the Flow Table
          ret = klee_table_access();
-         if (ret == GREYBOX_HIT) {                         // 0.0100786 / 5 = 0.002
-            //printf("pkt[%d] hits the flow table\n", i);
+         if (ret == GREYBOX_HIT) {
+            printf("pkt[%d] hits the flow table\n", i);
 
             // reset the flow table entry upon FIN packets
-            if (is_fin[i]) {                               // 0.000709535 / 5 = 0.00014
-               //printf("pkt[%d] is a FIN, resetting this entry\n", i);
+            if (is_fin[i]) {
+               printf("pkt[%d] is a FIN, resetting this entry\n", i);
                klee_table_write(0);
 
                // update the sw if the flow has sent a rtx during the last
                // time window
-               if (is_rtx_before_fin[i]) {             // 7.09535e-10 / 5 = 1.41907e-10
+               if (is_rtx_before_fin[i]) {
                   sw.bin[sw.cur_idx] -= 1;
                }
             }
             // Check if this packet is a retransmission and update sw
-            else {                                           // 0.00936908 / 5 = 0.0018
-               if (is_rtx[i]) {       // query rtx           // 6.27729e-06/5 = 1.25e-06
-                  //printf("pkt[%d] is an rtx\n", i);
+            else {
+               if (is_rtx[i]) {       // query rtx
+                  // It updates the count accordingly
+                  printf("pkt[%d] is an rtx\n", i);
                   sw_add(&sw);
+
+
+
                }
-               else {                                          // 0.00936281 / 5 = 0.0019
-                  //printf("pkt[%d] is not an rtx, skip\n", i);
+               else {
+                  printf("pkt[%d] is not an rtx, skip\n", i);
                }
             }
          }
 
          // table miss, reset this entry
-         else {    // 4.03992 / 5=0.807984
-            //printf("pkt[%d] is not monitored by Blink!\n", i);
+         else {
+            printf("pkt[%d] is not monitored by Blink!\n", i);
             // check if the flow has timeouted
-            if (is_flow_timeout[i]) {             // 0.403992 / 5 = 0.081
+
+            if (is_flow_timeout[i]) {
+
+               // during the last time window
                klee_table_write(0);
             }
          }
 
-         if (sw.sum >= THRES) {                   // 2.93651e-22 / 5 = 5.87302e-23
-            //printf("pkt[%d] triggers fast rerouting to nexthop %d\n", i, nexthop);
+
+         if (sw.sum >= THRES) {
+            printf("pkt[%d] triggers fast rerouting to nexthop %d\n", i, nexthop);
             nexthop = 1;
          }
       }

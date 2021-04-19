@@ -1,0 +1,85 @@
+{
+    "p4wn_path": "/home/jiarong/P4wn",
+    "trace_path": "/home/jiarong/P4wn/trace/",
+
+    "poise" : {
+        "59": "ctx_deny"
+    },
+    "starflow" : {
+        "88": "starflow_mask",
+        "89": "starflow_mask",
+        "108": "starflow_mask",
+        "112": "starflow_mask",
+        "136": "starflow_mask",
+        "137": "starflow_mask",
+        "140": "starflow_mask",
+        "143": "starflow_mask",
+        "148": "starflow_mask",
+        "149": "starflow_mask",
+        "152": "starflow_mask",
+        "155": "starflow_mask",
+        "162": "starflow_mask",
+        "163": "starflow_mask",
+        "166": "starflow_mask",
+        "169": "starflow_mask",
+        "174": "starflow_mask",
+        "175": "starflow_mask",
+        "184": "starflow_mirror_port",
+        "190": "starflow_mirror_port"
+    },
+    "netcache" : {
+        "264": "nc_instance",
+        "261": "nc_not_exist"
+    },
+    "rwnd" : {
+        "60": "rwnd_port_cpu",
+        "76": "rwnd_port_server"
+    },
+    "p40f" : {
+        "194": "p40f_bsi_neq",
+        "198": "p40f_bsi_neq",
+        "202": "p40f_bsi_eq",
+        "226": "p40f_bsf_eq",
+        "229": "p40f_bsf_eq",
+        "232": "p40f_bsf_eq"
+    },
+    "nat" : {
+        "48": "nat_ttl_lt_0",
+        "72": "nat_instance_eq_0"
+    },
+    "fix_prob": {
+        "nc_exist" : {
+            "1": 0.5,
+            "2": 0.4,
+            "3": 0.6
+        },
+        "nc_not_exist" : {
+            "1": 0.5,
+            "2": 0.6,
+            "3": 0.4
+        },
+        "nc_read": 0.9,
+        "nc_valid": 0.5,
+        "nc_instance": 0.9999,
+        "starflow_mask": 0.33,
+        "starflow_mirror_port": 0.00001,
+        "p40f_bsi_neq": 0.48,
+        "p40f_bsi_eq": 0.04,
+        "p40f_bsf_eq": 0.333,
+        "rwnd_port_cpu": 0.000002,
+        "rwnd_port_server": 0.499999,
+        "timing_port_server": 0.499999,
+        "timing_port_client": 0.499999,
+        "timing_data_cpu": 0.000002,
+        "overall_to:80": 0.01,
+        "rtx_before_fin": 0.000001,
+        "is_flow_timeout": 0.1,
+        "not_syn_ack_only": 0.9,
+        "nat_ttl_lt_0": 0.9995,
+        "nat_instance_eq_0": 0.667,
+        "acl_drop": 0.5,
+        "nethcf_enable": 0.9,
+        "nethcf_tcpsyn_ack": 0.1,
+        "nethcf_normal": 0.9
+    }
+}

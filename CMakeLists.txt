@@ -290,6 +290,9 @@ if (NOT EXISTS "${LLVMCXX}")
   message(FATAL_ERROR "Cannot find C++ bitcode compiler \"${LLVMCXX}\"")
 endif()
 
+find_package(JSONCPP)
+
+
 ################################################################################
 # C++ version
 ################################################################################

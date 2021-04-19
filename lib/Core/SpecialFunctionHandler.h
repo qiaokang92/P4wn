@@ -113,6 +113,7 @@ namespace klee {
     HANDLER(handleTableRead);
     HANDLER(handleTableWrite);
     HANDLER(handleTableAdd);
+    HANDLER(handleTableGetMax);
     HANDLER(handleTestSum);
     HANDLER(handleReadLargerThan);
 
@@ -141,9 +142,6 @@ namespace klee {
     HANDLER(handleTS);
     HANDLER(handleTSCminPkt);
     HANDLER(handleTSCmin);
-
-    // path prob
-    HANDLER(handleProbPath);
 
     // Utils
     HANDLER(handleUpdateIter);

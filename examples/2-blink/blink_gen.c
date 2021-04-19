@@ -4,8 +4,8 @@
 #include <klee/klee.h>
 
 #define HASH_SIZE 64
-#define NUM_LOOP  4
-#define THRES     4
+#define NUM_LOOP  3
+#define THRES     2
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))

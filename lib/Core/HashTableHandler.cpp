@@ -80,6 +80,18 @@ int HashTableHandler::ht_init(ExecutionState &cur, size_t sz)
    return 0;
 }
 
+int HashTableHandler::ht_get_max(ExecutionState &cur)
+{
+   HashTable *t = cur.table;
+   int max = 0;
+   for (auto x : t->dist) {
+      if (x.first > max) {
+         max = x.first;
+      }
+   }
+   LOG(LOG_MASK_HT, "returning max val in ht = %d", max);
+   return max;
+}
 
 int HashTableHandler::ht_access(ExecutionState &cur,
                                 vector<ExecutionState*> &states,

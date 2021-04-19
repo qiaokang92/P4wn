@@ -12,6 +12,8 @@
 #include <array>
 #include <regex>
 #include "helper.h"
+#include <chrono>
+#include <json/json.h>
 
 using namespace klee;
 using namespace std;
@@ -20,6 +22,8 @@ using namespace llvm;
 /************************************
 ******* helper functions ************
 ************************************/
+
+string config_path = "/home/jiarong/P4wn/config.json";
 
 static string GetStdoutFromCommand(string cmd)
 {
@@ -111,7 +115,7 @@ string LattECounter::conStrs2Vex(vector<string> k)
     string bitopt[] = {"And", "Or", "Xor", "Shl", "LShr", "AShr"};
 
     // Find all the symbolic variables
-    for (int i = 0; i < k.size(); i++){
+    for (unsigned int i = 0; i < k.size(); i++){
         string temp = k[i];
         while(temp.find("Read") != string::npos){
             temp = temp.substr(temp.find("Read") - 1);
@@ -132,10 +136,10 @@ string LattECounter::conStrs2Vex(vector<string> k)
     // The map records the hierarchy of the query expressions
     map<int, string> cmd_hier;
     // Get all the tokens except the bitvec manipulation expressions
-    for(int i = 0; i < k.size(); i++){
+    for(unsigned int i = 0; i < k.size(); i++){
         cmd_hier.clear();
         int num_paren = 0, ind = 0;
-        for (int j = 0; j < sym_var.size(); j++){
+        for (unsigned int j = 0; j < sym_var.size(); j++){
             sym_var[j] = 0;
         }
         sign = 1;
@@ -233,7 +237,7 @@ string LattECounter::conStrs2Vex(vector<string> k)
         }
         latte_str += to_string(sym_var[0]) + " ";
         // Print out the LattE translation
-        for(int j = 1; j < sym_var.size(); j++){
+        for(unsigned int j = 1; j < sym_var.size(); j++){
             sym_var[j] *= -1;
             latte_str += to_string(sym_var[j]) + " ";
         }
@@ -285,7 +289,7 @@ double LattECounter::computeProb(ref<Expr> e, ConstraintManager cons)
    //printf("got translated vex1_full=\n%s\n", vex1_full.c_str());
 
    // Temporal file to store the input of LattE
-   string out_file = "/home/qiaokang/tmp/matrix.txt";
+   string out_file = "/tmp/matrix.txt";
    // LattE executable location
    string cmd = "count";
 
@@ -326,9 +330,28 @@ double LattECounter::computeProbByOps(string ops, string prog)
    LOG(-1, "computeProbByOps, ops=%s", ops.c_str());
    double ret;
 
-   string file1 = "/home/qiaokang/dpattacks/tools/klee-prob/examples/sigcomm20/"
+   auto t1 = std::chrono::high_resolution_clock::now();
+
+   Json::Reader reader;
+   Json::Value root;
+
+   ifstream in(config_path, ios::binary);
+
+   if (!in.is_open())
+   {
+      cout << "Error opening file\n";
+      assert(0);
+   }
+
+   if (!reader.parse(in, root)) {
+      cout << "Read json fail"<<endl;
+      assert(0);
+
+   }
+
+   string file1 = root["p4wn_path"].asString() + "/examples/"
                   + prog + "/" + ops + "_up.mc";
-   string file2 = "/home/qiaokang/dpattacks/tools/klee-prob/examples/sigcomm20/"
+   string file2 = root["p4wn_path"].asString() + "/examples/"
                   + prog + "/" + ops + "_down.mc";
 
    LOG(-1, "file1=%s, file2=%s", file1.c_str(), file2.c_str());
@@ -343,6 +366,7 @@ double LattECounter::computeProbByOps(string ops, string prog)
    retString = GetStdoutFromCommand(cmd1.c_str());
    double count1 = getCountFromOuput(retString);
 
+   cout << "ddd "<<cmd2.c_str() << endl;
    retString = GetStdoutFromCommand(cmd2.c_str());
    double count2 = getCountFromOuput(retString);
 
@@ -354,5 +378,11 @@ double LattECounter::computeProbByOps(string ops, string prog)
    assert(ret >= 0);
 
    LOG(-1, "computeProbByOps, ops=%s, result=%f", ops.c_str(), ret);
+
+   auto t2 = std::chrono::high_resolution_clock::now();
+   auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+
+   LOG(-1, "MC invoked, time %ld us", duration);
+
    return ret;
 }

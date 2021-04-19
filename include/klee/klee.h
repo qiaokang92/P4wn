@@ -161,6 +161,7 @@ extern "C" {
   void klee_table_write(int val);
   void klee_table_add();
   int klee_test_sum(int thres);
+  int klee_table_get_max();
   int klee_read_larger_than(int thres);
 
   // Bloom filter APIs
@@ -186,9 +187,6 @@ extern "C" {
   int klee_telescope(int reg);
   int klee_telescope_cmin_pkt(int pktID);
   int klee_telescope_cmin();
-
-  int klee_prob_path(char *expr, int val);
-  //int klee_prob_path(int val);
 
   // Utils
   int klee_update_iter(int i);

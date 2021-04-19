@@ -41,7 +41,7 @@ private:
    bool isStableRanking();
 
    std::vector<rank_t> rank;
-   int numLoop;
+   uint32_t numLoop;
    int profile;
    int progNum;
    std::string progName;

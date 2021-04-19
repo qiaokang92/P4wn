@@ -42,6 +42,9 @@ public:
    // write to the table of cur state
    int ht_write(ExecutionState &cur, int val);
 
+   // return the max possible value in this hash table
+   int ht_get_max(ExecutionState &cur);
+
    // test if the sum of all entries is greater than sum
    int ht_test_sum(ExecutionState &cur, int sum,
                    std::vector<ExecutionState*> &states,

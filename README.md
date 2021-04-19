@@ -36,6 +36,20 @@ line to the `bashrc` file.
 export PATH=$PATH:<path_to_folder_of_count>
 ```
 
+### Install json lib
+
+```
+sudo apt-get install libjsoncpp-dev
+```
+
+### Configuration
+
+P4wn uses [config.json](./config.json) to configure the path and default probability. Modify it accordingly.
+
+You also need to update the path [here](./lib/Core/ModelCounter.cpp#L26), so that P4wn can locate the configuration json file.
+
+Notice that P4wn uses line number to query the probability of expressions that cannot be identified automitically. If you change the program, please remember to update the line number in the configuration json.
+
 
 ### Build P4wn
 
@@ -257,6 +271,15 @@ cd telescoping/blink
 p4wn --program-num 2 --real-trace 1 --enable-ts 1 blink.bc
 ```
 Result is 2.28091e-160.
+
+**Note:** The figure 8 in the paper shows the telescoping result of P4wn when using static probability (e.g., prob=0.5). The probability of P4wn when using real trace is shown as below. From left to right, they are blink(S5), netcache(S6), and netwrden(S11). As we can see, P4wn can use telescoping to achieve much more fine-grained estimates.
+
+<div align="center">
+<img src="./examples/telescope/accuracy-blink.png" width="300"/>
+<img src="./examples/telescope/accuracy-netcache.png" width="300"/>
+<img src="./examples/telescope/accuracy-netwarden.png" width="300"/>
+</div>
+
 
 
 

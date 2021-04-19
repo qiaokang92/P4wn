@@ -94,6 +94,7 @@ static SpecialFunctionHandler::HandlerInfo handlerInfo[] = {
   add("klee_table_read", handleTableRead, true),
   add("klee_table_write", handleTableWrite, false),
   add("klee_table_add", handleTableAdd, false),
+  add("klee_table_get_max", handleTableGetMax, true),
   add("klee_test_sum", handleTestSum, true),
   add("klee_read_larger_than", handleReadLargerThan, true),
 
@@ -112,9 +113,6 @@ static SpecialFunctionHandler::HandlerInfo handlerInfo[] = {
   add("klee_ma_access", handleMAAccess, true),
   add("klee_ma_read",   handleMARead,   true),
   add("klee_ma_insert", handleMAInsert, false),
-
-  // Prob. path
-  add("klee_prob_path", handleProbPath, true),
 
   // general query APIs
   // add("klee_query", handleQuery, true),
@@ -946,6 +944,18 @@ void SpecialFunctionHandler::handleTableInit(ExecutionState &state,
    assert(ret == 0);
 }
 
+void SpecialFunctionHandler::handleTableGetMax(ExecutionState &state,
+                                KInstruction *target,
+                                std::vector<ref<Expr> > &arguments)
+{
+
+  int ret = executor.htHandler->ht_get_max(state);
+  executor.bindLocal(target, state,
+                     ConstantExpr::create(ret,
+                                          Expr::Int32));
+}
+
+
 void SpecialFunctionHandler::handleTableAccess(ExecutionState &state,
                                                KInstruction *target,
                                                std::vector<ref<Expr> > &arguments)
@@ -1302,28 +1312,4 @@ void SpecialFunctionHandler::handleTSCmin(ExecutionState &state,
 {
    int ret = executor.tsHandler->ts_cmin_handler(&state);
    assert(ret == 0);
-}
-
-void SpecialFunctionHandler::handleProbPath(ExecutionState &state,
-                                            KInstruction *target,
-                                            std::vector<ref<Expr> > &arguments)
-{
-   vector<ExecutionState*> states;
-   vector<int> rets;
-
-   LOG(-1, "in SpecialFunctionHandler::handleProbPath");
-
-   int ret = executor.queryHandler->handleProbPath(
-                        readStringAtAddress(state, arguments[0]),
-                        cast<ConstantExpr>(arguments[1])->getZExtValue(),
-                        state, states, rets);
-
-   assert(states.size() == rets.size());
-   assert(ret == 0);
-
-   // return values for each forked states.
-   for (unsigned i = 0; i < states.size(); i ++) {
-      executor.bindLocal(target, *states[i],
-                         ConstantExpr::create(rets[i], Expr::Int32));
-   }
 }

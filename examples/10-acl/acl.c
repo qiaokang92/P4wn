@@ -14,6 +14,9 @@
 int main()
 {
    int i, ret;
+   uint8_t drop_flag;
+   klee_make_symbolic(&drop_flag, sizeof drop_flag, "acl_drop");
+
 
    // Initialize the ACL table, modeled as a greybox
    klee_ma_init();
@@ -22,9 +25,12 @@ int main()
       printf("=== Processing pkt %d ===\n", i);
 
       ret = klee_ma_access();
-      if (ret == GREYBOX_HIT) {            // 0.75
+      if (ret == GREYBOX_HIT) {
          printf("enforcing ACL\n");
-      } else {                             // 0.25
+         if (drop_flag) {
+            printf("apply(drop_stats);\n");
+         }
+      } else {
          printf("sending to CPU\n");
       }
    }

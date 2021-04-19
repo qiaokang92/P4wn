@@ -6,7 +6,7 @@
 #include <klee/klee.h>
 
 #define HASH_SIZE 64
-#define NUM_LOOP  4
+#define NUM_LOOP  2
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
@@ -84,15 +84,40 @@ int main()
       idx_t* idx2 = get_idx("idx2");
 
       // compute ECMP idx using a re-organized key
-      klee_assume(key_expr1->ip == key_expr2->ip);
-      klee_assume(key_expr1->port == key_expr2->port);
-      klee_assume(key_expr1->proto == key_expr2->proto);
+      //klee_assume(key_expr1->ip == key_expr2->ip);
+      //klee_assume(key_expr1->port == key_expr2->port);
+      //klee_assume(key_expr1->proto == key_expr2->proto);
 
-      if ((*idx2 + table[*idx1].value) % 2 == 0) {
-         printf("sending to port 0\n");
+
+      uint32_t ecmp_offset = (*idx2 + table[*idx1].value) % 2;
+      uint8_t egress_port;
+      uint8_t nhop_ipv4;
+      // apply(ecmp_nhop);
+      if (ecmp_offset){
+         printf("forwarding to port 1");
+         egress_port = 1;
+         nhop_ipv4 = 1;
       } else {
-         printf("sending to port 1\n");
+         printf("forwarding to port 2");
+         egress_port = 2;
+         nhop_ipv4 = 2;
       }
+
+      // apply(forward);
+      if (nhop_ipv4 == 1) {
+         printf("set_dmac to port 1\n");
+      } else {
+         printf("set_dmac to port 2\n");
+      }
+
+      // send_frame.apply();
+      if (egress_port == 1){
+         printf("rewrite_mac to port 1");
+      } else{
+         printf("rewrite_mac to port 2");
+      }
+
+
    }
 
    return 0;

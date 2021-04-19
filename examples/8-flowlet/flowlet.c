@@ -3,7 +3,7 @@
 #include <klee/klee.h>
 
 #define HASH_SIZE 65536
-#define NUM_LOOP  3
+#define NUM_LOOP  2
 
 
 // =======================================
@@ -16,34 +16,62 @@ int main()
    int i, ret;
    int is_timeout[NUM_LOOP];
    int pktID[NUM_LOOP];
-
-   klee_make_symbolic(is_timeout, sizeof is_timeout, "is_timeout");
+   klee_make_symbolic(is_timeout, sizeof is_timeout, "perflow_to:5000000");
    klee_make_symbolic(pktID, sizeof pktID, "pktID");
 
    // Initialize the cache, modeled as a greybox
    klee_table_init(HASH_SIZE);
 
+   uint8_t last_flowid = 0;
    for (i = 0; i < NUM_LOOP; i ++) {
       klee_update_iter(i);
       printf("=== Processing pkt %d ===\n", i);
       ret = klee_table_access();
-      // Query the ratio of per-flow IPD > 5ms
-      if (is_timeout[i]) {            // 0.0466667 / 2 = 0.023
-         klee_table_add();
-      }
 
-      if (ret != GREYBOX_MISS) {      // 1.56148e-05 / 2 = 7.8074e-06
+      if (ret != GREYBOX_MISS) {
          ret = klee_table_read();
-         // Query: P4wn should just query half or use LattE to compute the prob,
-         // the result is 50% because pktID follows uniform distribution
-         if ((pktID[i] + ret) % 2 == 0) {     // Attack (never timeout) 7.80741e-06 / 2 = 3.9e-06
-            printf("sending to port 0\n");
-         } else {                             // Attack (never timeout) 7.80741e-06 / 2 = 3.9e-06
-            printf("sending to port 1\n");
-         }
-      } else {                         // 1.99998 / 2 = 0.99999
+      } else {
          klee_table_write(0);
       }
+
+      uint8_t flowid;
+      // Query the ratio of per-flow IPD > 5ms
+      if (is_timeout[i]) {
+         klee_table_add();
+         flowid = last_flowid+1;
+         last_flowid += 1;
+      } else {
+         flowid = last_flowid;
+      }
+
+      // apply(ecmp_group);
+      uint8_t egress_port;
+      uint8_t nhop_ipv4;
+      // apply(ecmp_nhop);
+      if ((pktID[i]+flowid) % 2 == 0){
+         printf("forwarding to port 1");
+         egress_port = 1;
+         nhop_ipv4 = 1;
+      } else {
+         printf("forwarding to port 2");
+         egress_port = 2;
+         nhop_ipv4 = 2;
+      }
+
+      // apply(forward);
+      if (nhop_ipv4 == 1) {
+         printf("set_dmac to port 1\n");
+      } else {
+         printf("set_dmac to port 2\n");
+      }
+
+      // send_frame.apply();
+      if (egress_port == 1){
+         printf("rewrite_mac to port 1");
+      } else{
+         printf("rewrite_mac to port 2");
+      }
+
    }
 
    return 0;

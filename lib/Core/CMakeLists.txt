@@ -56,3 +56,4 @@ target_link_libraries(kleeCore PRIVATE
   kleaverExpr
   kleeSupport
 )
+target_link_libraries(kleeCore PUBLIC jsoncpp_lib)
